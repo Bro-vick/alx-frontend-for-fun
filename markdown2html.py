@@ -6,45 +6,59 @@ import sys
 import os
 import re
 
-if __name__ == '__main__':
 
-    # This Tests if the number of arguments passed is 2
-    if len(sys.argv[1:]) != 2:
-        print('Usage: ./markdown2html.py README.md README.html',
-              file=sys.stderr)
+def convert_md_to_html(input_file, output_file):
+    """
+    Convert Markdown file to HTML file.
+
+    Args:
+        input_file (str): Input file path.
+        output_file (str): Output file path.
+    """
+    if not os.path.exists(input_file) or not os.path.isfile(input_file):
+        print(f"Error: Input file '{input_file}' does not exist or is not a file.")
         sys.exit(1)
 
-    # Store the arguments into variables
-    inputFile = sys.argv[1]
-    outputFile = sys.argv[2]
+    html_content = []
+    unordered_list_started = False
 
-    # Checks that the markdown file exists and is a file
-    if not (os.path.exists(inputFile) and os.path.isfile(inputFile)):
-        print(f'Missing {inputFile}', file=sys.stderr)
-        sys.exit(1)
+    with open(input_file, "r", encoding="utf-8") as f:
+        for line in f:
+            line = line.rstrip()
 
-    with open(inputFile, encoding='utf-8') as file_1:
-        html_content = []
-        md_content = [line[:-1] for line in file_1.readlines()]
-        for line in md_content:
-            heading = re.split(r'#{1,6} ', line)
+            # Handle headings
+            heading = re.split(r"#{1,6} ", line)
             if len(heading) > 1:
-                # Compute the number of the # present to
-                # determine heading level
-                h_level = len(line[:line.find(heading[1])-1])
-                # Append the html equivalent of the heading
-                html_content.append(
-                    f'<h{h_level}>{heading[1]}</h{h_level}>\n'
-                )
-            elif line.startswith("- "):
-                if not html_content or not html_content[-1].startswith("<ul>"):
-                    html_content.append("<ul>\n")
-                html_content.append(f"<li>{line[2:]}</li>\n")
+                h_level = len(line[: line.find(heading[1]) - 1])
+                html_content.append(f"<h{h_level}>{heading[1]}</h{h_level}>\n")
+
+            # Handle unordered lists
             else:
-                html_content.append(line)
-        # Close any open unordered lists
-        if html_content and html_content[-1].startswith("<ul>"):
+                list_item = re.split(r"- ", line)
+                if len(list_item) > 1:
+                    html_content.append(f"<li>{list_item[1]}</li>\n")
+                    if not unordered_list_started:
+                        html_content.append("<ul>\n")
+                        unordered_list_started = True
+                else:
+                    if unordered_list_started:
+                        html_content.append("</ul>\n")
+                        unordered_list_started = False
+                    html_content.append(line)
+
+        if unordered_list_started:
             html_content.append("</ul>\n")
 
-    with open(outputFile, 'w', encoding='utf-8') as file_2:
-        file_2.writelines(html_content)
+    with open(output_file, "w", encoding="utf-8") as f:
+        f.writelines(html_content)
+
+
+if __name__ == "__main__":
+    if len(sys.argv[1:]) != 2:
+        print("Usage: ./markdown2html.py <input-file> <output-file>")
+        sys.exit(1)
+
+    input_file = sys.argv[1]
+    output_file = sys.argv[2]
+    convert_md_to_html(input_file, output_file)
+
