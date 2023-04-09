@@ -36,8 +36,15 @@ if __name__ == '__main__':
                 html_content.append(
                     f'<h{h_level}>{heading[1]}</h{h_level}>\n'
                 )
+            elif line.startswith("- "):
+                if not html_content or not html_content[-1].startswith("<ul>"):
+                    html_content.append("<ul>\n")
+                html_content.append(f"<li>{line[2:]}</li>\n")
             else:
                 html_content.append(line)
+        # Close any open unordered lists
+        if html_content and html_content[-1].startswith("<ul>"):
+            html_content.append("</ul>\n")
 
     with open(outputFile, 'w', encoding='utf-8') as file_2:
         file_2.writelines(html_content)
