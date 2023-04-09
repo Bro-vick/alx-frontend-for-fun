@@ -1,28 +1,43 @@
+#!/usr/bin/python3
+'''
+This is python  script that codes markdown to HTML
+'''
 import sys
 import os
-import markdown
+import re
 
-# Check if the number of arguments is correct
-if len(sys.argv) < 3:
-    print("Usage: ./markdown2html.py <input_file> <output_file>", file=sys.stderr)
-    sys.exit(1)
+if __name__ == '__main__':
 
-input_file = sys.argv[1]
-output_file = sys.argv[2]
+    # This Tests if the number of arguments passed is 2
+    if len(sys.argv[1:]) != 2:
+        print('Usage: ./markdown2html.py README.md README.html',
+              file=sys.stderr)
+        sys.exit(1)
 
-# Check if the input file exists
-if not os.path.exists(input_file):
-    print(f"Missing {input_file}", file=sys.stderr)
-    sys.exit(1)
+    # Store the arguments into variables
+    inputFile = sys.argv[1]
+    outputFile = sys.argv[2]
 
-# Convert Markdown to HTML
-with open(input_file, 'r') as f:
-    md_content = f.read()
-    html_content = markdown.markdown(md_content)
+    # Checks that the markdown file exists and is a file
+    if not (os.path.exists(inputFile) and os.path.isfile(inputFile)):
+        print(f'Missing {inputFile}', file=sys.stderr)
+        sys.exit(1)
 
-# Write HTML output to file
-with open(output_file, 'w') as f:
-    f.write(html_content)
+    with open(inputFile, encoding='utf-8') as file_1:
+        html_content = []
+        md_content = [line[:-1] for line in file_1.readlines()]
+        for line in md_content:
+            heading = re.split(r'#{1,6} ', line)
+            if len(heading) > 1:
+                # Compute the number of the # present to
+                # determine heading level
+                h_level = len(line[:line.find(heading[1])-1])
+                # Append the html equivalent of the heading
+                html_content.append(
+                    f'<h{h_level}>{heading[1]}</h{h_level}>\n'
+                )
+            else:
+                html_content.append(line)
 
-sys.exit(0)
-
+    with open(outputFile, 'w', encoding='utf-8') as file_2:
+        file_2.writelines(html_content)
